@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Car Advertisement Generator</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a1a1a;
+            margin-bottom: 1.5rem;
+            font-size: 3rem;
+            font-weight: 700;
+        }
+
+        .profiles-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-card {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .profile-card:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-card.selected {
+            border-color: #007bff;
+            background-color: #f8f9ff;
+        }
+
+        .profile-card h3 {
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+            font-size: 3rem;
+        }
+
+        .profile-card p {
+            color: #666;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .profile-card .birth-years {
+            color: #007bff;
+            font-size: 2rem;
+            font-weight: 500;
+        }
+
+        .generate-btn {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 1rem auto;
+            padding: 0.8rem 1.5rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .generate-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .generate-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .result-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .image-scores-wrapper {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .generated-image {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .scores {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            padding: 1rem;
+            background: #f8f9ff;
+            border-radius: 8px;
+            height: fit-content;
+        }
+
+        .score-item {
+            text-align: center;
+            padding: 0.8rem;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .score-label {
+            font-size: 2.4rem;
+            color: #666;
+            margin-bottom: 0.3rem;
+            font-weight: 500;
+        }
+
+        .score-value {
+            font-size: 5rem;
+            font-weight: 700;
+            color: #007bff;
+            margin: 0.3rem 0;
+        }
+
+        .score-description {
+            font-size: 1.8rem;
+            color: #666;
+            margin-top: 0.3rem;
+            line-height: 1.3;
+        }
+
+        .prompt-display {
+            padding: 1rem;
+            background: #f8f9ff;
+            border-radius: 6px;
+            text-align: left;
+            font-size: 2rem;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .image-scores-wrapper {
+                grid-template-columns: 1fr;
+            }
+            .scores {
+                margin-top: 1rem;
+            }
+        }
+
+        .evaluation-info {
+            padding: 1rem;
+            background: #f8f9ff;
+            border-radius: 6px;
+            font-size: 1rem;
+            color: #666;
+            line-height: 1.4;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Car Advertisement Generator</h1>
+        
+        <div class="profiles-grid">
+            <div class="profile-card" data-profile="Gen Z">
+                <h3>Gen Z</h3>
+                <p class="birth-years">1996–2015</p>
+                <p>Digital natives, environmentally conscious, value affordability.</p>
+            </div>
+            <div class="profile-card" data-profile="Millennials">
+                <h3>Millennials</h3>
+                <p class="birth-years">1981–1995</p>
+                <p>Tech-savvy, socially and environmentally aware, value technology and eco-friendly options.</p>
+            </div>
+            <div class="profile-card" data-profile="Gen X">
+                <h3>Gen X</h3>
+                <p class="birth-years">1965–1980</p>
+                <p>Independent, practical, value work-life balance, often with families needing larger vehicles.</p>
+            </div>
+            <div class="profile-card" data-profile="Baby Boomers">
+                <h3>Baby Boomers</h3>
+                <p class="birth-years">1946–1964</p>
+                <p>Value quality and brand reputation, traditional in choices, may have more disposable income for luxury.</p>
+            </div>
+        </div>
+
+        <button class="generate-btn" onclick="generateImage()" disabled>Generate Advertisement</button>
+
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>Generating your advertisement...</p>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let selectedProfile = null;
+
+        // Handle profile selection
+        document.querySelectorAll('.profile-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.profile-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedProfile = card.dataset.profile;
+                document.querySelector('.generate-btn').disabled = false;
+            });
+        });
+
+        function generateImage() {
+            if (!selectedProfile) return;
+
+            document.querySelector('.loading').style.display = 'block';
+            document.querySelector('.generate-btn').disabled = true;
+            document.getElementById('result').innerHTML = '';
+
+            $.ajax({
+                url: "/generate",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ profile: selectedProfile }),
+                success: function(data) {
+                    document.querySelector('.loading').style.display = 'none';
+                    document.querySelector('.generate-btn').disabled = false;
+
+                    if (data.error) {
+                        document.getElementById('result').innerHTML = `<p style="color: red; font-size: 1.2rem;">Error: ${data.error}</p>`;
+                        return;
+                    }
+
+                    const resultHTML = `
+                        <div class="result-container">
+                            <div class="prompt-display">
+                                <strong>Prompt:</strong><br>
+                                ${data.prompt}
+                            </div>
+                            <div class="image-scores-wrapper">
+                                <img src="data:image/png;base64,${data.image}" alt="Generated Car Advertisement" class="generated-image">
+                                <div class="scores">
+                                    <div class="score-item">
+                                        <div class="score-label">Car Match</div>
+                                        <div class="score-value">${data.scores.car.toFixed(0)}%</div>
+                                        <div class="score-description">Presence and prominence of car</div>
+                                    </div>
+                                    <div class="score-item">
+                                        <div class="score-label">Style Match</div>
+                                        <div class="score-value">${data.scores.style.toFixed(0)}%</div>
+                                        <div class="score-description">Photography quality and style</div>
+                                    </div>
+                                    <div class="score-item">
+                                        <div class="score-label">Mood Match</div>
+                                        <div class="score-value">${data.scores.mood.toFixed(0)}%</div>
+                                        <div class="score-description">Overall emotional impact</div>
+                                    </div>
+                                    <div class="score-item">
+                                        <div class="score-label">Average</div>
+                                        <div class="score-value">${data.scores.average.toFixed(0)}%</div>
+                                        <div class="score-description">Overall effectiveness</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('result').innerHTML = resultHTML;
+                },
+                error: function(xhr, status, error) {
+                    document.querySelector('.loading').style.display = 'none';
+                    document.querySelector('.generate-btn').disabled = false;
+                    document.getElementById('result').innerHTML = `<p style="color: red; font-size: 1.2rem;">Error: ${error}</p>`;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
